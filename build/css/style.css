@@ -1,0 +1,17 @@
+.container {
+  color: red; }
+
+@media screen and (min-width: 768px) {
+  .container {
+    max-height: 900px; } }
+
+h3 {
+  color: red; }
+
+.nav {
+  margin: 0; }
+  @media screen and (min-width: 768px) {
+    .nav {
+      max-height: 900px;
+      margin: 56px;
+      color: green; } }
