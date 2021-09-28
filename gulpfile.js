@@ -1,7 +1,7 @@
 //Секция подключения плагинов
 
 const gulp = require('gulp'); // подкл сам gulp
-const sass = require('gulp-sass')(require('node-sass')); // подкл остальных плагинов
+const sass = require('gulp-sass')(require('node-sass')); // подкл sass
 const cleanCSS = require('gulp-clean-css'); // сжимает и оптимизирует css
 const rename = require('gulp-rename');  // переименовывает
 const plumber = require('gulp-plumber'); // отлавливает ошибки
@@ -22,6 +22,7 @@ const path = {
     dev:{
         root: 'src',
         html: ['src/**/*.html', '!src/components/**/*.html'],
+        php: ['src/**/*.php', '!src/components/**/*.{php,html}'],
         sass: 'src/sass/**/*.{sass,scss}',
         js: 'src/js/main.js',
         img: 'src/img/**/*.{jpg,png,jpeg}',
@@ -53,13 +54,18 @@ function liveReload(done){  // BrowserSync live server - ip notebook:8080
     done()
 }
 
-function move (){
+function moveHtml (){
    return gulp.src(path.dev.html) // возьми все html из src
    .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
     .pipe(fileinclude())
      .pipe(gulp.dest(path.build.root)) // положи в папку 'build'
      .pipe(browserSync.stream());
 }
+function movePhp (){
+    return gulp.src(path.dev.php) // возьми все php из src
+    .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
+      .pipe(gulp.dest(path.build.root)) // положи в папку 'build'
+ }
 
 function styles (){
     return gulp.src(path.dev.sass)
@@ -74,11 +80,11 @@ function styles (){
         }))
         .pipe(gulp.dest(path.build.css)) // выгружаем оптимизированный css
         .pipe(browserSync.stream()); // автоматически следит и при изменениях перезагружает страницу BrowserSync
-        
 }
 
 function scripts () { // работа с js файлами
     return gulp.src(path.dev.js)
+        .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
         .pipe(include()) // подключает все файлы в один файл на выходе(можно использовать для js,html,css)
         .pipe(rename('original.js')) // переименовываем
         .pipe(gulp.dest(path.build.js))
@@ -100,18 +106,21 @@ function images (){
 
 function fonts2woff(){
     return gulp.src(path.dev.ttf)
+        .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
         .pipe(ttf2woff())
         .pipe(gulp.dest(path.build.ttf))
 }
 function fonts2woff2(){
     return gulp.src(path.dev.ttf)
+        .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
         .pipe(ttf2woff2())
         .pipe(gulp.dest(path.build.ttf))
 }
 
 function watcher(done) { // следит за изменениями, колбэк вместо done может быть что угодно исп просто чтобы вернуть все вместо return 
     gulp.watch(path.dev.sass, styles) // следи за файлами если изменятся то запусти задачу styles
-    gulp.watch(path.dev.html, move) // следи за файлами html если изменятся то запусти задачу move
+    gulp.watch(path.dev.html, moveHtml) // следи за файлами html если изменятся то запусти задачу moveHtml
+    gulp.watch(path.dev.php, movePhp) // следи за файлами php если изменятся то запусти задачу movePhp
     gulp.watch(path.dev.js, scripts)
     gulp.watch(path.dev.ttf, fonts2woff)
     gulp.watch(path.dev.img, images)
@@ -121,7 +130,8 @@ function watcher(done) { // следит за изменениями, колбэ
 
 //Обязательный экспорт задач необходим для запуска задач gulp
 
-exports.move = move;
+exports.moveHtml = moveHtml;
+exports.movePhp = movePhp;
 exports.styles = styles; // экспортируй функцию например для вызова из терминала
 exports.watcher = watcher;
 exports.scripts = scripts;
@@ -129,11 +139,11 @@ exports.images = images;
 exports.fonts2woff = fonts2woff;
 exports.fonts2woff2 = fonts2woff2;
 
-exports.default = gulp.series( //dev основной экспорт создает запуск всех задач одной командой (gulp) запуск задач последовательный
+exports.devHtml = gulp.series( //dev основной экспорт создает запуск всех задач одной командой (gulp) запуск задач последовательный
     clean,
     gulp.parallel( //dev запуск задач паралельный
         styles,
-        move,
+        moveHtml,
         scripts,
         fonts2woff,
         images
@@ -142,11 +152,35 @@ exports.default = gulp.series( //dev основной экспорт созда�
     watcher
 );
 
-exports.build = gulp.series( //build final основной экспорт создает запуск всех задач одной командой (gulp) запуск задач последовательный
+exports.buildHtml = gulp.series( //build final основной экспорт создает запуск всех задач одной командой (gulp) запуск задач последовательный
     clean,
     gulp.parallel( //build final запуск задач паралельный
         styles,
-        move,
+        moveHtml,
+        scripts,
+        fonts2woff,
+        fonts2woff2,
+        images
+    )
+);
+
+exports.devPhp = gulp.series( //dev основной экспорт создает запуск всех задач одной командой (gulp) запуск задач последовательный
+    clean,
+    gulp.parallel( //dev запуск задач паралельный
+        styles,
+        movePhp,
+        scripts,
+        fonts2woff,
+        images
+    ),
+    watcher
+);
+
+exports.buildPhp = gulp.series( //build final основной экспорт создает запуск всех задач одной командой (gulp) запуск задач последовательный
+    clean,
+    gulp.parallel( //build final запуск задач паралельный
+        styles,
+        movePhp,
         scripts,
         fonts2woff,
         fonts2woff2,
