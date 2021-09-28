@@ -10,24 +10,38 @@ const babel = require('gulp-babel'); // переводит js в старый с
 const uglify = require('gulp-uglify'); // сжимает js
 const include = require('gulp-include'); // позволяет исп вставку кода
 const browserSync = require('browser-sync').create(); // live для всех устройств
+const webp = require('gulp-webp'); // img в webp
+const ttf2woff = require('gulp-ttf2woff'); // ttf шрифт в woff
+const ttf2woff2 = require('gulp-ttf2woff2'); // ttf шрифт в woff2
+const del = require('del'); // удаляет файлы или папки
+const fileinclude = require('gulp-file-include');
 
 //Для облегчения работы пути храним в объекте
 
 const path = {
     dev:{
         root: 'src',
-        html: 'src/**/*.html',
+        html: ['src/**/*.html', '!src/components/**/*.html'],
         sass: 'src/sass/**/*.{sass,scss}',
-        js: 'src/js/main.js'
+        js: 'src/js/main.js',
+        img: 'src/img/**/*.{jpg,png,jpeg}',
+        fonts: 'src/fonts/**/*.*',
+        ttf: 'src/fonts/**/*.ttf'
     },
     build:{
         root: 'build',
         css: 'build/css',
-        js: 'build/js'
+        js: 'build/js',
+        img: 'build/img',
+        ttf: 'build/fonts'
     }
 }
 
 // Секция создания таск или задач gulp(каждая функция эта задача gulp)
+
+async function clean() {
+    return await del.sync(path.build.root);
+}
 
 function liveReload(done){  // BrowserSync live server - ip notebook:8080
     browserSync.init({
@@ -40,7 +54,9 @@ function liveReload(done){  // BrowserSync live server - ip notebook:8080
 }
 
 function move (){
-   return gulp.src(path.dev.html) // возьми все html из src 
+   return gulp.src(path.dev.html) // возьми все html из src
+   .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
+    .pipe(fileinclude())
      .pipe(gulp.dest(path.build.root)) // положи в папку 'build'
      .pipe(browserSync.stream());
 }
@@ -75,10 +91,30 @@ function scripts () { // работа с js файлами
         .pipe(browserSync.stream());
 }
 
+function images (){
+    return gulp.src(path.dev.img)
+    .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
+    .pipe(webp())
+    .pipe(gulp.dest(path.build.img))
+}
+
+function fonts2woff(){
+    return gulp.src(path.dev.ttf)
+        .pipe(ttf2woff())
+        .pipe(gulp.dest(path.build.ttf))
+}
+function fonts2woff2(){
+    return gulp.src(path.dev.ttf)
+        .pipe(ttf2woff2())
+        .pipe(gulp.dest(path.build.ttf))
+}
+
 function watcher(done) { // следит за изменениями, колбэк вместо done может быть что угодно исп просто чтобы вернуть все вместо return 
     gulp.watch(path.dev.sass, styles) // следи за файлами если изменятся то запусти задачу styles
     gulp.watch(path.dev.html, move) // следи за файлами html если изменятся то запусти задачу move
     gulp.watch(path.dev.js, scripts)
+    gulp.watch(path.dev.ttf, fonts2woff)
+    gulp.watch(path.dev.img, images)
 
     done(); // возвр результат вместо return исп в том случае если функция ничего не возвращает иначе будет ошибка
 }
@@ -89,21 +125,31 @@ exports.move = move;
 exports.styles = styles; // экспортируй функцию например для вызова из терминала
 exports.watcher = watcher;
 exports.scripts = scripts;
+exports.images = images;
+exports.fonts2woff = fonts2woff;
+exports.fonts2woff2 = fonts2woff2;
 
 exports.default = gulp.series( //dev основной экспорт создает запуск всех задач одной командой (gulp) запуск задач последовательный
+    clean,
     gulp.parallel( //dev запуск задач паралельный
         styles,
         move,
-        scripts
+        scripts,
+        fonts2woff,
+        images
     ),
     liveReload,
     watcher
 );
 
 exports.build = gulp.series( //build final основной экспорт создает запуск всех задач одной командой (gulp) запуск задач последовательный
+    clean,
     gulp.parallel( //build final запуск задач паралельный
         styles,
         move,
-        scripts
+        scripts,
+        fonts2woff,
+        fonts2woff2,
+        images
     )
 );
