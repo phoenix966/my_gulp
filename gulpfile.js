@@ -15,6 +15,8 @@ const ttf2woff = require('gulp-ttf2woff'); // ttf шрифт в woff
 const ttf2woff2 = require('gulp-ttf2woff2'); // ttf шрифт в woff2
 const del = require('del'); // удаляет файлы или папки
 const fileinclude = require('gulp-file-include');
+const iconfont = require('gulp-iconfont');
+const iconfontCss = require('gulp-iconfont-css');
 
 //Для облегчения работы пути храним в объекте
 
@@ -27,7 +29,8 @@ const path = {
         js: 'src/js/main.js',
         img: 'src/img/**/*.{jpg,png,jpeg}',
         fonts: 'src/fonts/**/*.*',
-        ttf: 'src/fonts/**/*.ttf'
+        ttf: 'src/fonts/**/*.ttf',
+        iconfont: 'src/fonts/toGenerateIconFonts/**/*.svg'
     },
     build:{
         root: 'build',
@@ -53,6 +56,23 @@ function liveReload(done){  // BrowserSync live server - ip notebook:8080
     })
     done()
 }
+
+function iconFont () {
+    return gulp.src(path.dev.iconfont)
+    // .pipe(del.sync(''))
+    .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
+        .pipe(iconfontCss({
+            fontName: 'icons',
+            path: 'src/sass/config/templates/_iconsTpl.scss',
+            targetPath: '../../sass/includes/_icons.scss',
+            fontPath: '../fonts/icons/'
+        }))
+            .pipe(iconfont({
+                fontName: 'icons'
+            }))
+            .pipe(gulp.dest(`${path.dev.root}/fonts/icons`));
+}
+
 
 function moveHtml (){
    return gulp.src(path.dev.html) // возьми все html из src
@@ -138,6 +158,7 @@ exports.scripts = scripts;
 exports.images = images;
 exports.fonts2woff = fonts2woff;
 exports.fonts2woff2 = fonts2woff2;
+exports.iconFont = iconFont;
 
 exports.devHtml = gulp.series( //dev основной экспорт создает запуск всех задач одной командой (gulp) запуск задач последовательный
     clean,
