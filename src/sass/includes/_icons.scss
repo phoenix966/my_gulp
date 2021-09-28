@@ -27,13 +27,13 @@
 @function icon-char($filename) {
 	$char: "";
 
-	@if $filename == 18613677641620478925 {
+	@if $filename == brush {
 		$char: "\E001";
 	}
-	@if $filename == 18678370981620478923 {
+	@if $filename == go {
 		$char: "\E002";
 	}
-	@if $filename == 4253208291620478924 {
+	@if $filename == Ro {
 		$char: "\E003";
 	}
 
@@ -51,13 +51,13 @@
 	}
 }
 
-.icon-18613677641620478925 {
-	@include icon(18613677641620478925);
+.icon-brush {
+	@include icon(brush);
 }
-.icon-18678370981620478923 {
-	@include icon(18678370981620478923);
+.icon-go {
+	@include icon(go);
 }
-.icon-4253208291620478924 {
-	@include icon(4253208291620478924);
+.icon-Ro {
+	@include icon(Ro);
 }
 

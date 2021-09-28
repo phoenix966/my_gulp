@@ -15,8 +15,8 @@ const ttf2woff = require('gulp-ttf2woff'); // ttf шрифт в woff
 const ttf2woff2 = require('gulp-ttf2woff2'); // ttf шрифт в woff2
 const del = require('del'); // удаляет файлы или папки
 const fileinclude = require('gulp-file-include');
-const iconfont = require('gulp-iconfont');
-const iconfontCss = require('gulp-iconfont-css');
+const iconfont = require('gulp-iconfont'); // Создает иконочный шрифт
+const iconfontCss = require('gulp-iconfont-css'); // создает стили к иконочному шрифту
 
 //Для облегчения работы пути храним в объекте
 
@@ -27,7 +27,8 @@ const path = {
         php: ['src/**/*.php', '!src/components/**/*.{php,html}'],
         sass: 'src/sass/**/*.{sass,scss}',
         js: 'src/js/main.js',
-        img: 'src/img/**/*.{jpg,png,jpeg}',
+        img: 'src/img/**/*.{jpg,png,jpeg,Jpg,Png,Jpeg,JPG,PNG,JPEG,tiff,webp}',
+        otherImg: ['src/img/**/*.*','!src/img/**/*.{jpg,png,jpeg,Jpg,Png,Jpeg,JPG,PNG,JPEG,tiff,webp,db}'],
         fonts: 'src/fonts/**/*.*',
         ttf: 'src/fonts/**/*.ttf',
         iconfont: 'src/fonts/toGenerateIconFonts/**/*.svg'
@@ -57,9 +58,13 @@ function liveReload(done){  // BrowserSync live server - ip notebook:8080
     done()
 }
 
+function moveOtherImg () {
+    return gulp.src(path.dev.otherImg)
+        .pipe(gulp.dest(path.build.img))
+}
+
 function iconFont () {
     return gulp.src(path.dev.iconfont)
-    // .pipe(del.sync(''))
     .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
         .pipe(iconfontCss({
             fontName: 'icons',
@@ -144,6 +149,7 @@ function watcher(done) { // следит за изменениями, колбэ
     gulp.watch(path.dev.js, scripts)
     gulp.watch(path.dev.ttf, fonts2woff)
     gulp.watch(path.dev.img, images)
+    gulp.watch(path.dev.otherImg,moveOtherImg)
 
     done(); // возвр результат вместо return исп в том случае если функция ничего не возвращает иначе будет ошибка
 }
@@ -159,6 +165,7 @@ exports.images = images;
 exports.fonts2woff = fonts2woff;
 exports.fonts2woff2 = fonts2woff2;
 exports.iconFont = iconFont;
+exports.moveOtherImg = moveOtherImg;
 
 exports.devHtml = gulp.series( //dev основной экспорт создает запуск всех задач одной командой (gulp) запуск задач последовательный
     clean,
@@ -167,7 +174,8 @@ exports.devHtml = gulp.series( //dev основной экспорт созда�
         moveHtml,
         scripts,
         fonts2woff,
-        images
+        images,
+        moveOtherImg
     ),
     liveReload,
     watcher
@@ -181,7 +189,8 @@ exports.buildHtml = gulp.series( //build final основной экспорт �
         scripts,
         fonts2woff,
         fonts2woff2,
-        images
+        images,
+        moveOtherImg
     )
 );
 
@@ -192,7 +201,8 @@ exports.devPhp = gulp.series( //dev основной экспорт создае
         movePhp,
         scripts,
         fonts2woff,
-        images
+        images,
+        moveOtherImg
     ),
     watcher
 );
@@ -205,6 +215,7 @@ exports.buildPhp = gulp.series( //build final основной экспорт с
         scripts,
         fonts2woff,
         fonts2woff2,
-        images
+        images,
+        moveOtherImg
     )
 );

@@ -38,6 +38,8 @@
 	8) Конвертирует ttf to woff (в dev режиме) и ttf to woff,woff2 (в build режиме)
 	9) Конвертирует jpg,png,jpeg to webp 
 	10) Использует компонентный подход 
+	11) Ложим svg файлы иконки в fonts/toGenerateFonts и запускаем команду iconFont для создания иконочного шрифта 
+		а scss генерируется в sass/includes/_icons.scss
 
 
 
