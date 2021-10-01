@@ -24,6 +24,7 @@ const path = {
     dev:{
         root: 'src',
         html: ['src/**/*.html', '!src/components/**/*.html'],
+        allHtml: 'src/**/*.html',
         php: ['src/**/*.php', '!src/components/**/*.{php,html}'],
         sass: 'src/sass/**/*.{sass,scss}',
         js: 'src/js/main.js',
@@ -144,7 +145,7 @@ function fonts2woff2(){
 
 function watcher(done) { // следит за изменениями, колбэк вместо done может быть что угодно исп просто чтобы вернуть все вместо return 
     gulp.watch(path.dev.sass, styles) // следи за файлами если изменятся то запусти задачу styles
-    gulp.watch(path.dev.html, moveHtml) // следи за файлами html если изменятся то запусти задачу moveHtml
+    gulp.watch(path.dev.allHtml, moveHtml) // следи за файлами html если изменятся то запусти задачу moveHtml
     gulp.watch(path.dev.php, movePhp) // следи за файлами php если изменятся то запусти задачу movePhp
     gulp.watch(path.dev.js, scripts)
     gulp.watch(path.dev.ttf, fonts2woff)
