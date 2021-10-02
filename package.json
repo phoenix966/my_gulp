@@ -18,6 +18,7 @@
     "gulp-babel": "^8.0.0",
     "gulp-clean-css": "^4.3.0",
     "gulp-file-include": "^2.3.0",
+    "gulp-google-webfonts": "^4.1.0",
     "gulp-iconfont": "^11.0.0",
     "gulp-iconfont-css": "^3.0.0",
     "gulp-include": "^2.4.1",

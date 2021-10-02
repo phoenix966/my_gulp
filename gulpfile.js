@@ -14,9 +14,10 @@ const webp = require('gulp-webp'); // img в webp
 const ttf2woff = require('gulp-ttf2woff'); // ttf шрифт в woff
 const ttf2woff2 = require('gulp-ttf2woff2'); // ttf шрифт в woff2
 const del = require('del'); // удаляет файлы или папки
-const fileinclude = require('gulp-file-include');
+const fileinclude = require('gulp-file-include'); // подключает html компоненты
 const iconfont = require('gulp-iconfont'); // Создает иконочный шрифт
 const iconfontCss = require('gulp-iconfont-css'); // создает стили к иконочному шрифту
+const googleWebFonts = require('gulp-google-webfonts');
 
 //Для облегчения работы пути храним в объекте
 
@@ -31,6 +32,7 @@ const path = {
         otherImg: ['src/img/**/*.*','!src/img/**/*.{jpg,png,jpeg,Jpg,Png,Jpeg,JPG,PNG,JPEG,tiff,webp,db}'],
         fonts: 'src/fonts/**/*.*',
         ttf: 'src/fonts/**/*.ttf',
+        otherFonts:'src/fonts/**/*.woff',
         iconfont: 'src/fonts/generateIcon(dontREMOVE)/**/*.svg'
     },
     build:{
@@ -61,6 +63,24 @@ function liveReload(done){  // BrowserSync live server - ip notebook:8080
 function moveOtherImg () {
     return gulp.src(path.dev.otherImg)
         .pipe(gulp.dest(path.build.img))
+}
+
+function moveOtherFonts () {
+    return gulp.src(path.dev.otherFonts)
+        .pipe(gulp.dest(path.build.ttf))
+}
+// скачивает google fonts
+
+// let options = { };
+
+function downloadGoogleFonts () {
+    return gulp.src('./fonts.list')
+        .pipe(googleWebFonts({
+            fontsDir: '../fonts/googleFonts',
+            cssDir: '../sass/includes',
+            cssFilename: '_myGoogleFonts.scss',
+        }))
+        .pipe(gulp.dest('src/fonts/'))
 }
 
 function iconFont () {
@@ -150,6 +170,7 @@ function watcher(done) { // следит за изменениями, колбэ
     gulp.watch(path.dev.ttf, fonts2woff)
     gulp.watch(path.dev.img, images)
     gulp.watch(path.dev.otherImg,moveOtherImg)
+    gulp.watch(path.dev.otherFonts,moveOtherFonts)
 
     done(); // возвр результат вместо return исп в том случае если функция ничего не возвращает иначе будет ошибка
 }
@@ -166,6 +187,8 @@ exports.fonts2woff = fonts2woff;
 exports.fonts2woff2 = fonts2woff2;
 exports.iconFont = iconFont;
 exports.moveOtherImg = moveOtherImg;
+exports.downloadGoogleFonts = downloadGoogleFonts;
+exports.moveOtherFonts = moveOtherFonts;
 
 exports.devHtml = gulp.series( //dev основной экспорт создает запуск всех задач одной командой (gulp) запуск задач последовательный
     clean,
@@ -175,7 +198,8 @@ exports.devHtml = gulp.series( //dev основной экспорт созда�
         scripts,
         fonts2woff,
         images,
-        moveOtherImg
+        moveOtherImg,
+        moveOtherFonts,
     ),
     liveReload,
     watcher
@@ -190,8 +214,10 @@ exports.buildHtml = gulp.series( //build final основной экспорт �
         fonts2woff,
         fonts2woff2,
         images,
-        moveOtherImg
-    )
+        moveOtherImg,
+        moveOtherFonts,
+    ),
+    
 );
 
 exports.devPhp = gulp.series( //dev основной экспорт создает запуск всех задач одной командой (gulp) запуск задач последовательный
@@ -202,7 +228,8 @@ exports.devPhp = gulp.series( //dev основной экспорт создае
         scripts,
         fonts2woff,
         images,
-        moveOtherImg
+        moveOtherImg,
+        moveOtherFonts
     ),
     watcher
 );
@@ -216,6 +243,7 @@ exports.buildPhp = gulp.series( //build final основной экспорт с
         fonts2woff,
         fonts2woff2,
         images,
-        moveOtherImg
+        moveOtherImg,
+        moveOtherFonts
     )
 );
