@@ -1,4 +1,4 @@
-//=require ../../node_modules/jquery/dist/jquery.js
-//=require ../../node_modules/bootstrap/dist/js/bootstrap.js
+import $ from 'jquery';
+import bootstrap from 'bootstrap';
 
-
+$('.header__title').text('Привет ES6');

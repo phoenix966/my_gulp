@@ -6,9 +6,7 @@ const cleanCSS = require('gulp-clean-css'); // сжимает и оптимиз�
 const rename = require('gulp-rename');  // переименовывает
 const plumber = require('gulp-plumber'); // отлавливает ошибки
 const notify = require('gulp-notify'); // украшает ошибки
-// const babel = require('gulp-babel'); // переводит js в старый синтаксис
 const uglify = require('gulp-uglify'); // сжимает js
-const include = require('gulp-include'); // позволяет исп вставку кода
 const browserSync = require('browser-sync').create(); // live для всех устройств
 const webp = require('gulp-webp'); // img в webp
 const ttf2woff = require('gulp-ttf2woff'); // ttf шрифт в woff
@@ -18,28 +16,50 @@ const fileinclude = require('gulp-file-include'); // подключает html �
 const iconfont = require('gulp-iconfont'); // Создает иконочный шрифт
 const iconfontCss = require('gulp-iconfont-css'); // создает стили к иконочному шрифту
 const googleWebFonts = require('gulp-google-webfonts');
+//для конвертации ES6
+const sourcemaps = require('gulp-sourcemaps');
+const gulpif = require('gulp-if');
+const browserify = require('browserify');
+const babelify = require('babelify');
+const source = require('vinyl-source-stream');
+const buffer = require('vinyl-buffer');
 
+// define entry for browserify
+const jsSrc = 'main.js';
+const jsFolder = 'src/js/';
+// we can add a script for front-end and script for back-end and so on
+const jsFiles = [jsSrc];
+let production = false;
+
+function onProductionMode(done) {
+    production = true;
+    done();
+}
+function offProductionMode(done) {
+    production = false;
+    done();
+}
 //Для облегчения работы пути храним в объекте
 
 const path = {
-    dev:{
+    dev: {
         root: 'src',
         html: ['src/**/*.html', '!src/components/**/*.html'],
         allHtml: 'src/**/*.html',
-        php: ['src/**/*.php', '!src/components/**/*.{php,html}','!src/vendor/**/*.*'],
+        php: ['src/**/*.php', '!src/components/**/*.{php,html}', '!src/vendor/**/*.*'],
         sass: 'src/sass/**/*.{sass,scss}',
         js: 'src/js/main.js',
         img: 'src/img/**/*.{jpg,png,jpeg,Jpg,Png,Jpeg,JPG,PNG,JPEG,tiff,webp}',
-        otherImg: ['src/img/**/*.*','!src/img/**/*.{jpg,png,jpeg,Jpg,Png,Jpeg,JPG,PNG,JPEG,tiff,webp,db}'],
+        otherImg: ['src/img/**/*.*', '!src/img/**/*.{jpg,png,jpeg,Jpg,Png,Jpeg,JPG,PNG,JPEG,tiff,webp,db}'],
         fonts: 'src/fonts/**/*.*',
-        ttf: ['src/fonts/**/*.ttf','!src/fonts/icomoon/**/*.*'],
-        otherFonts:['src/fonts/**/*.{woff,woff2}','!src/fonts/icomoon/**/*.*'],
+        ttf: ['src/fonts/**/*.ttf', '!src/fonts/icomoon/**/*.*'],
+        otherFonts: ['src/fonts/**/*.{woff,woff2}', '!src/fonts/icomoon/**/*.*'],
         iconfont: 'src/fonts/generateIcon(dontREMOVE)/**/*.svg',
         composer: ['src/composer.{json,lock}'],
         vendor: 'src/vendor/**/*.*',
         icomoon: 'src/fonts/icomoon/**/*.*'
     },
-    build:{
+    build: {
         root: 'build',
         css: 'build/css',
         js: 'build/js',
@@ -56,21 +76,21 @@ async function clean() {
     return await del.sync(path.build.root);
 }
 
-function moveComposer (){
+function moveComposer() {
     return gulp.src(path.dev.composer)
-    .pipe(gulp.dest(path.build.root))
+        .pipe(gulp.dest(path.build.root))
 }
-function moveVendor (){
+function moveVendor() {
     return gulp.src(path.dev.vendor)
-    .pipe(gulp.dest(path.build.vendor))
+        .pipe(gulp.dest(path.build.vendor))
 }
 
-function moveIcomoon (){
+function moveIcomoon() {
     return gulp.src(path.dev.icomoon)
-    .pipe(gulp.dest(path.build.icomoon))
+        .pipe(gulp.dest(path.build.icomoon))
 }
 
-function liveReload(done){  // BrowserSync live server - ip notebook:8080
+function liveReload(done) {  // BrowserSync live server - ip notebook:8080
     browserSync.init({
         server: {
             baseDir: path.build.root
@@ -80,18 +100,18 @@ function liveReload(done){  // BrowserSync live server - ip notebook:8080
     done()
 }
 
-function moveOtherImg () {
+function moveOtherImg() {
     return gulp.src(path.dev.otherImg)
         .pipe(gulp.dest(path.build.img))
 }
 
-function moveOtherFonts () {
+function moveOtherFonts() {
     return gulp.src(path.dev.otherFonts)
         .pipe(gulp.dest(path.build.ttf))
 }
 // скачивает google fonts
 
-function downloadGoogleFonts () {
+function downloadGoogleFonts() {
     return gulp.src('./fonts.list')
         .pipe(googleWebFonts({
             fontsDir: '../fonts/googleFonts',
@@ -102,40 +122,40 @@ function downloadGoogleFonts () {
         .pipe(gulp.dest('src/fonts/'))
 }
 
-function iconFont () {
+function iconFont() {
     return gulp.src(path.dev.iconfont)
-    .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
+        .pipe(plumber({ errorHandler: notify.onError("Error: <%= error.message %>") }))
         .pipe(iconfontCss({
             fontName: 'icons',
             path: 'src/sass/config/templates/_iconsTpl.scss',
             targetPath: '../../sass/includes/_icons.scss',
             fontPath: '../fonts/icons/'
         }))
-            .pipe(iconfont({
-                fontName: 'icons'
-            }))
-            .pipe(gulp.dest(`${path.dev.root}/fonts/icons`));
+        .pipe(iconfont({
+            fontName: 'icons'
+        }))
+        .pipe(gulp.dest(`${path.dev.root}/fonts/icons`));
 }
 
 
-function moveHtml (){
-   return gulp.src(path.dev.html) // возьми все html из src
-   .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
-    .pipe(fileinclude())
-     .pipe(gulp.dest(path.build.root)) // положи в папку 'build'
-     .pipe(browserSync.stream());
+function moveHtml() {
+    return gulp.src(path.dev.html) // возьми все html из src
+        .pipe(plumber({ errorHandler: notify.onError("Error: <%= error.message %>") }))
+        .pipe(fileinclude())
+        .pipe(gulp.dest(path.build.root)) // положи в папку 'build'
+        .pipe(browserSync.stream());
 }
-function movePhp (){
+function movePhp() {
     return gulp.src(path.dev.php) // возьми все php из src
-    .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
-      .pipe(gulp.dest(path.build.root)) // положи в папку 'build'
- }
+        .pipe(plumber({ errorHandler: notify.onError("Error: <%= error.message %>") }))
+        .pipe(gulp.dest(path.build.root)) // положи в папку 'build'
+}
 
 
 
-function styles (){
+function styles() {
     return gulp.src(path.dev.sass)
-        .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")})) // возвращает и уведомляет при ошибках можно исп в любом месте
+        .pipe(plumber({ errorHandler: notify.onError("Error: <%= error.message %>") })) // возвращает и уведомляет при ошибках можно исп в любом месте
         .pipe(sass()) // преобразуем в sass
         .pipe(gulp.dest(path.build.css)) // выгружаем простой css без оптимизации
         .pipe(cleanCSS({ // оптимизация css а также минификация
@@ -148,37 +168,44 @@ function styles (){
         .pipe(browserSync.stream()); // автоматически следит и при изменениях перезагружает страницу BrowserSync
 }
 
-function scripts () { // работа с js файлами
-    return gulp.src(path.dev.js)
-        .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
-        .pipe(include()) // подключает все файлы в один файл на выходе(можно использовать для js,html,css)
-        .pipe(rename('original.js')) // переименовываем
-        .pipe(gulp.dest(path.build.js))
-        // .pipe(babel({ // конвертирует новый js синтаксис в старый понятный для любого браузера
-        //     presets: ['@babel/env'] // стандартный пресет
-        // }))
-        .pipe(uglify()) // сжимает js код
-        .pipe(rename('build.min.js')) // переименовываем
-        .pipe(gulp.dest(path.build.js))
-        .pipe(browserSync.stream());
+async function scripts() {
+    jsFiles.map(function (entry) {
+        return (
+            browserify({
+                entries: [jsFolder + entry],
+            })
+                .transform(babelify, { presets: ['@babel/preset-env'] })
+                .bundle() // соединяет в бандл
+                .pipe(source('main.js'))
+                // To load existing source maps
+                // This will cause sourceMaps to use the previous sourcemap to create an ultimate sourcemap
+                .pipe(gulpif(production, rename({ extname: '.min.js' })))
+                .pipe(buffer())
+                .pipe(gulpif(!production, sourcemaps.init({ loadMaps: true })))
+                .pipe(gulpif(production, uglify()))
+                .pipe(gulpif(!production, sourcemaps.write('./')))
+                .pipe(gulp.dest(path.build.js))
+                .pipe(browserSync.stream())
+        );
+    });
 }
 
-function images (){
+function images() {
     return gulp.src(path.dev.img)
-    .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
-    .pipe(webp())
-    .pipe(gulp.dest(path.build.img))
+        .pipe(plumber({ errorHandler: notify.onError("Error: <%= error.message %>") }))
+        .pipe(webp())
+        .pipe(gulp.dest(path.build.img))
 }
 
-function fonts2woff(){
+function fonts2woff() {
     return gulp.src(path.dev.ttf)
-        .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
+        .pipe(plumber({ errorHandler: notify.onError("Error: <%= error.message %>") }))
         .pipe(ttf2woff())
         .pipe(gulp.dest(path.build.ttf))
 }
-function fonts2woff2(){
+function fonts2woff2() {
     return gulp.src(path.dev.ttf)
-        .pipe(plumber({errorHandler: notify.onError("Error: <%= error.message %>")}))
+        .pipe(plumber({ errorHandler: notify.onError("Error: <%= error.message %>") }))
         .pipe(ttf2woff2())
         .pipe(gulp.dest(path.build.ttf))
 }
@@ -190,11 +217,11 @@ function watcher(done) { // следит за изменениями, колбэ
     gulp.watch(path.dev.js, scripts)
     gulp.watch(path.dev.ttf, fonts2woff)
     gulp.watch(path.dev.img, images)
-    gulp.watch(path.dev.otherImg,moveOtherImg)
-    gulp.watch(path.dev.otherFonts,moveOtherFonts)
-    gulp.watch(path.dev.composer,moveComposer)
-    gulp.watch(path.dev.vendor,moveVendor),
-    gulp.watch(path.dev.icomoon,moveIcomoon)
+    gulp.watch(path.dev.otherImg, moveOtherImg)
+    gulp.watch(path.dev.otherFonts, moveOtherFonts)
+    gulp.watch(path.dev.composer, moveComposer)
+    gulp.watch(path.dev.vendor, moveVendor),
+        gulp.watch(path.dev.icomoon, moveIcomoon)
 
     done(); // возвр результат вместо return исп в том случае если функция ничего не возвращает иначе будет ошибка
 }
@@ -213,13 +240,14 @@ exports.iconFont = iconFont;
 exports.moveOtherImg = moveOtherImg;
 exports.downloadGoogleFonts = downloadGoogleFonts;
 exports.moveOtherFonts = moveOtherFonts;
-
 exports.moveComposer = moveComposer;
 exports.moveVendor = moveVendor;
-
 exports.moveIcomoon = moveIcomoon;
+exports.onProductionMode = onProductionMode;
+exports.offProductionMode = offProductionMode;
 
 exports.devHtml = gulp.series( //dev основной экспорт создает запуск всех задач одной командой (gulp) запуск задач последовательный
+    offProductionMode,
     clean,
     gulp.parallel( //dev запуск задач паралельный
         styles,
@@ -236,6 +264,7 @@ exports.devHtml = gulp.series( //dev основной экспорт созда�
 );
 
 exports.buildHtml = gulp.series( //build final основной экспорт создает запуск всех задач одной командой (gulp) запуск задач последовательный
+    onProductionMode,
     clean,
     gulp.parallel( //build final запуск задач паралельный
         styles,
@@ -248,10 +277,11 @@ exports.buildHtml = gulp.series( //build final основной экспорт �
         moveOtherFonts,
         moveIcomoon
     ),
-    
+
 );
 
 exports.devPhp = gulp.series( //dev основной экспорт создает запуск всех задач одной командой (gulp) запуск задач последовательный
+    offProductionMode,
     clean,
     gulp.parallel( //dev запуск задач паралельный
         styles,
@@ -269,6 +299,7 @@ exports.devPhp = gulp.series( //dev основной экспорт создае
 );
 
 exports.buildPhp = gulp.series( //build final основной экспорт создает запуск всех задач одной командой (gulp) запуск задач последовательный
+    onProductionMode,
     clean,
     gulp.parallel( //build final запуск задач паралельный
         styles,
