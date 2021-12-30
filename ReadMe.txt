@@ -1,31 +1,19 @@
 Примечания к сборке!
 ----------------------
- Плагин gulp-include 
-
-позволяет подключать части кода js ,css, и любые библиотеки 
-а также для html Используется другая библиотека gulp-file-include
+Для импорта HTML файлов изпользуется  gulp-file-include
+для JS файлов Broserify + Babelify;
 
 ---------------------------------------
 					-JS-
 ---------------------------------------
- команды для подключения:
+ команды для подключения в main.js:
 
-//=require vendor/jquery.js        
-								   
-//=require vendor/**/*.js		   
-
-//=include relative/path/to/file.js
-
-//=include ./relative/path/to/file-even-when-includePaths-set.js
-
-/*=include relative/path/to/file.css */
-
-#=include relative/path/to/file.coffee 
+import $ from 'jquery';
 
 ---------------------------------------
 				-HTML-
 ---------------------------------------
-для HTML(например svg) и не только нужно использовать:
+для HTML(например svg) и не только можно использовать:
 
  	@@include('./components/header.html')   
     @@include('./components/footer.html')	
@@ -48,10 +36,11 @@
 1) SASS
 2) Оптимизация сss кода
 3) Сжатие кода 
-4) Преобразование синтаксиса js в старый синтаксис(babel) отключено !!
+4) Преобразование синтаксиса js в старый синтаксис(babel);
+4.5)Сборка модулей в один файл(ES6)
 5) Сжатие js кода
 6) Добавлены для подключения Bootstrap 5 и Jquery
-7) BrowserSync для всех устройств в сети (например другого пк или мобилтного)
+7) BrowserSync для всех устройств в сети (например другого пк или мобильного)
 	(чтобы войти с другого устройства нужно в браузере вбить ip адрес пк и порт: 8080 например: 192.168.1.6:8080)
 8) Конвертирует ttf to woff (в dev режиме) и ttf to woff,woff2 (в build режиме)
 9) Конвертирует jpg,png,jpeg,tiff to webp ,остальные переносит без изменений
@@ -59,6 +48,16 @@
 11) Ложим svg файлы иконки в fonts/toGenerateFonts и запускаем команду iconFont для создания иконочного шрифта 
 	а scss генерируется в sass/includes/_icons.scss
 12) также можно работать с PHP файлами (отключен file-include,BrowserSync)
+13) Командой gulp downloadGoogleFonts скачивает шрифты указанные в fonts.list (копируем ссылку с google fonts из cdn где @import 
+	Например:
+
+	<style>
+		@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Roboto:ital@0;1&display=swap');
+	</style> 
+
+)
+После выполнения команды выкачивает шрифты в .ttf формате и ложит в fonts распределяя названия по папкам и генерирует готовый 
+.scss файл для подключения шрифтов без необходимости вносить какие-либо правки
 
 
 -------------------------------------
@@ -68,11 +67,8 @@
 gulp iconFont // создает иконочный шрифт
 gulp downloadGoogleFonts //скачивает google шрифты и создает scss файл для подключения
 (берет список шрифтов из файла ./fonts.list
-	в формате woff:
-	
-	например:
-		PT Serif:400,700,700italic  // Шрифт:жирность (порядок важен по нарастанию)
-		Roboto:400,700
+	в формате ttf:
+		@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&family=Roboto:ital@0;1&display=swap');
 
 -----------		
 )

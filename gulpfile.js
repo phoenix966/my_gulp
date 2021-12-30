@@ -15,7 +15,7 @@ const del = require('del'); // удаляет файлы или папки
 const fileinclude = require('gulp-file-include'); // подключает html компоненты
 const iconfont = require('gulp-iconfont'); // Создает иконочный шрифт
 const iconfontCss = require('gulp-iconfont-css'); // создает стили к иконочному шрифту
-const googleWebFonts = require('gulp-google-webfonts');
+const downloadFonts = require('./utils.js'); // Ramil function
 //для конвертации ES6
 const sourcemaps = require('gulp-sourcemaps');
 const gulpif = require('gulp-if');
@@ -109,17 +109,16 @@ function moveOtherFonts() {
     return gulp.src(path.dev.otherFonts)
         .pipe(gulp.dest(path.build.ttf))
 }
-// скачивает google fonts
+// скачивает google fonts Ramil function
 
-function downloadGoogleFonts() {
-    return gulp.src('./fonts.list')
-        .pipe(googleWebFonts({
-            fontsDir: '../fonts/googleFonts',
-            cssDir: '../sass/includes',
-            cssFilename: '_myGoogleFonts.scss',
-            format: 'ttf'
-        }))
-        .pipe(gulp.dest('src/fonts/'))
+async function downloadGoogleFonts(done) {
+    await downloadFonts(
+        {
+            downloadFontsDir: './src/fonts/',
+            cssFilePath: './src/sass/includes/_fonts.scss'
+        }
+    );
+    done();
 }
 
 function iconFont() {
